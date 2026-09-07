@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <!-- Keep IDs, author and this file path stable for existing DATABASECHANGELOG records. -->
+    <changeSet id="001-initial-schema" author="recruitment" dbms="postgresql">
+        <preConditions onFail="HALT" onError="HALT"
+                       onFailMessage="Existing schema detected. Baseline the applied changes before initializing Liquibase.">
+            <not><tableExists tableName="app_user"/></not>
+        </preConditions>
+        <createTable tableName="app_user">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" primaryKeyName="app_user_pkey" nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(320)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="app_user_email_key"/>
+            </column>
+            <column name="display_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="gmail_account" type="VARCHAR(320)"/>
+            <column name="discord_user_id" type="VARCHAR(64)"/>
+            <column name="status" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="job">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" primaryKeyName="job_pkey" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="department" type="VARCHAR(200)"/>
+            <column name="required_skills" type="TEXT" defaultValue="[]">
+                <constraints nullable="false"/>
+            </column>
+            <column name="preferred_skills" type="TEXT" defaultValue="[]">
+                <constraints nullable="false"/>
+            </column>
+            <column name="minimum_experience_years" type="NUMERIC(4,1)"/>
+            <column name="status" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="UUID">
+                <constraints referencedTableName="app_user" referencedColumnNames="id" foreignKeyName="job_created_by_fkey"/>
+            </column>
+            <column name="created_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="candidate">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" primaryKeyName="candidate_pkey" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)"/>
+            <column name="email" type="VARCHAR(320)"/>
+            <column name="phone" type="VARCHAR(64)"/>
+            <column name="current_company" type="VARCHAR(200)"/>
+            <column name="current_title" type="VARCHAR(200)"/>
+            <column name="experience_years" type="NUMERIC(4,1)"/>
+            <column name="skills" type="TEXT" defaultValue="[]">
+                <constraints nullable="false"/>
+            </column>
+            <column name="education" type="TEXT" defaultValue="[]">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="application">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" primaryKeyName="application_pkey" nullable="false"/>
+            </column>
+            <column name="candidate_id" type="UUID">
+                <constraints referencedTableName="candidate" referencedColumnNames="id" foreignKeyName="application_candidate_id_fkey"/>
+            </column>
+            <column name="job_id" type="UUID">
+                <constraints nullable="false" referencedTableName="job" referencedColumnNames="id" foreignKeyName="application_job_id_fkey"/>
+            </column>
+            <column name="source" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="gmail_message_id" type="VARCHAR(255)">
+                <constraints unique="true" uniqueConstraintName="application_gmail_message_id_key"/>
+            </column>
+            <column name="mail_subject" type="TEXT"/>
+            <column name="mail_body" type="TEXT"/>
+            <column name="status" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="received_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="resume">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" primaryKeyName="resume_pkey" nullable="false"/>
+            </column>
+            <column name="candidate_id" type="UUID">
+                <constraints referencedTableName="candidate" referencedColumnNames="id" foreignKeyName="resume_candidate_id_fkey"/>
+            </column>
+            <column name="application_id" type="UUID">
+                <constraints nullable="false" referencedTableName="application" referencedColumnNames="id" foreignKeyName="resume_application_id_fkey"/>
+            </column>
+            <column name="file_name" type="VARCHAR(500)"/>
+            <column name="content_type" type="VARCHAR(100)"/>
+            <column name="storage_reference" type="TEXT"/>
+            <column name="parsed_content" type="TEXT"/>
+            <column name="parse_status" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="review">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" primaryKeyName="review_pkey" nullable="false"/>
+            </column>
+            <column name="candidate_id" type="UUID">
+                <constraints nullable="false" referencedTableName="candidate" referencedColumnNames="id" foreignKeyName="review_candidate_id_fkey"/>
+            </column>
+            <column name="application_id" type="UUID">
+                <constraints nullable="false" referencedTableName="application" referencedColumnNames="id" foreignKeyName="review_application_id_fkey"/>
+            </column>
+            <column name="job_id" type="UUID">
+                <constraints nullable="false" referencedTableName="job" referencedColumnNames="id" foreignKeyName="review_job_id_fkey"/>
+            </column>
+            <column name="score" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="recommendation" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="matched_skills" type="TEXT" defaultValue="[]">
+                <constraints nullable="false"/>
+            </column>
+            <column name="missing_skills" type="TEXT" defaultValue="[]">
+                <constraints nullable="false"/>
+            </column>
+            <column name="risk_flags" type="TEXT" defaultValue="[]">
+                <constraints nullable="false"/>
+            </column>
+            <column name="model" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="prompt_version" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="review_version" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <sql>ALTER TABLE review ADD CONSTRAINT review_score_check CHECK (score BETWEEN 0 AND 100);</sql>
+        <createTable tableName="outbox_event">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" primaryKeyName="outbox_event_pkey" nullable="false"/>
+            </column>
+            <column name="event_id" type="UUID">
+                <constraints nullable="false" unique="true" uniqueConstraintName="outbox_event_event_id_key"/>
+            </column>
+            <column name="aggregate_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="aggregate_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_type" type="VARCHAR(150)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payload" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="retry_count" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="published_time" type="TIMESTAMPTZ"/>
+        </createTable>
+        <createIndex indexName="idx_outbox_pending" tableName="outbox_event">
+            <column name="status"/>
+            <column name="created_time"/>
+        </createIndex>
+        <createTable tableName="processed_event">
+            <column name="consumer_name" type="VARCHAR(150)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="processed_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="processed_event" columnNames="consumer_name,event_id" constraintName="processed_event_pkey"/>
+        <createTable tableName="agent_execution">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" primaryKeyName="agent_execution_pkey" nullable="false"/>
+            </column>
+            <column name="agent_type" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="aggregate_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="model" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="prompt_version" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="prompt_tokens" type="INTEGER"/>
+            <column name="completion_tokens" type="INTEGER"/>
+            <column name="started_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_time" type="TIMESTAMPTZ"/>
+            <column name="error_message" type="TEXT"/>
+        </createTable>
+        <createTable tableName="oauth2_authorized_client">
+            <column name="user_id" type="UUID">
+                <constraints nullable="false" referencedTableName="app_user" referencedColumnNames="id" foreignKeyName="oauth2_authorized_client_user_id_fkey"/>
+            </column>
+            <column name="registration_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="principal_name" type="VARCHAR(320)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="access_token_ciphertext" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="access_token_issued_at" type="TIMESTAMPTZ"/>
+            <column name="access_token_expires_at" type="TIMESTAMPTZ"/>
+            <column name="refresh_token_ciphertext" type="TEXT"/>
+            <column name="refresh_token_issued_at" type="TIMESTAMPTZ"/>
+            <column name="scopes" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="oauth2_authorized_client" columnNames="principal_name,registration_id" constraintName="oauth2_authorized_client_pkey"/>
+    </changeSet>
+    <changeSet id="002-pipeline" author="recruitment" dbms="postgresql">
+        <addColumn tableName="candidate">
+            <column name="profile_json" type="TEXT" defaultValue="{}">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <!-- PostgreSQL partial expression index: preserve non-empty Email uniqueness. -->
+        <sql>CREATE UNIQUE INDEX candidate_email_normalized ON candidate (lower(email)) WHERE email IS NOT NULL AND email &lt;&gt; '';</sql>
+        <addColumn tableName="application">
+            <column name="owner_id" type="UUID">
+                <constraints referencedTableName="app_user" referencedColumnNames="id" foreignKeyName="application_owner_id_fkey"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="application">
+            <column name="failure_code" type="VARCHAR(100)"/>
+        </addColumn>
+        <addColumn tableName="application">
+            <column name="candidate_profile_json" type="TEXT"/>
+        </addColumn>
+        <addColumn tableName="outbox_event">
+            <column name="next_attempt_time" type="TIMESTAMPTZ" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="outbox_event">
+            <column name="lease_until" type="TIMESTAMPTZ"/>
+        </addColumn>
+        <addColumn tableName="outbox_event">
+            <column name="lease_token" type="UUID"/>
+        </addColumn>
+        <createTable tableName="notification">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" primaryKeyName="notification_pkey" nullable="false"/>
+            </column>
+            <column name="review_id" type="UUID">
+                <constraints nullable="false" unique="true" uniqueConstraintName="notification_review_id_key" referencedTableName="review" referencedColumnNames="id" foreignKeyName="notification_review_id_fkey"/>
+            </column>
+            <column name="status" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="discord_channel_id" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="discord_message_id" type="VARCHAR(64)"/>
+            <column name="created_time" type="TIMESTAMPTZ" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_time" type="TIMESTAMPTZ" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="discord_message_mapping">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" primaryKeyName="discord_message_mapping_pkey" nullable="false"/>
+            </column>
+            <column name="discord_message_id" type="VARCHAR(64)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="discord_message_mapping_discord_message_id_key"/>
+            </column>
+            <column name="discord_channel_id" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="candidate_id" type="UUID">
+                <constraints nullable="false" referencedTableName="candidate" referencedColumnNames="id" foreignKeyName="discord_message_mapping_candidate_id_fkey"/>
+            </column>
+            <column name="application_id" type="UUID">
+                <constraints nullable="false" referencedTableName="application" referencedColumnNames="id" foreignKeyName="discord_message_mapping_application_id_fkey"/>
+            </column>
+            <column name="job_id" type="UUID">
+                <constraints nullable="false" referencedTableName="job" referencedColumnNames="id" foreignKeyName="discord_message_mapping_job_id_fkey"/>
+            </column>
+            <column name="review_id" type="UUID">
+                <constraints nullable="false" unique="true" uniqueConstraintName="discord_message_mapping_review_id_key" referencedTableName="review" referencedColumnNames="id" foreignKeyName="discord_message_mapping_review_id_fkey"/>
+            </column>
+            <column name="created_time" type="TIMESTAMPTZ" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="gmail_subscription">
+            <column name="principal_name" type="VARCHAR(320)">
+                <constraints primaryKey="true" primaryKeyName="gmail_subscription_pkey" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false" referencedTableName="app_user" referencedColumnNames="id" foreignKeyName="gmail_subscription_user_id_fkey"/>
+            </column>
+            <column name="job_id" type="UUID">
+                <constraints nullable="false" referencedTableName="job" referencedColumnNames="id" foreignKeyName="gmail_subscription_job_id_fkey"/>
+            </column>
+            <column name="query" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="application_owner_time" tableName="application">
+            <column name="owner_id"/>
+            <column name="created_time" descending="true"/>
+        </createIndex>
+        <createIndex indexName="review_application_time" tableName="review">
+            <column name="application_id"/>
+            <column name="created_time" descending="true"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

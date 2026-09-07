@@ -1,0 +1,12 @@
+target/
+verify-target*/
+.idea/
+.vscode/
+*.iml
+.env
+data/
+uploads/
+*.log
+application-local.yml
+client-secret*.json
+token*.json

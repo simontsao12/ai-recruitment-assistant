@@ -1,0 +1,80 @@
+spring:
+  application:
+    name: ai-recruitment-assistant
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/recruitment
+    username: recruitment
+    password: recruitment
+  datasource:
+    url: jdbc:postgresql://localhost:5432/recruitment
+    username: recruitment
+    password: recruitment
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    url: jdbc:postgresql://localhost:5432/recruitment
+    user: recruitment
+    password: recruitment
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:disabled}
+            client-secret: ${GOOGLE_CLIENT_SECRET:disabled}
+            scope: openid,profile,email,https://www.googleapis.com/auth/gmail.readonly
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&prompt=consent
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: recruitment-assistant
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+      max-poll-records: 1
+      properties:
+        max.poll.interval.ms: ${KAFKA_MAX_POLL_INTERVAL_MS:900000}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+    listener:
+      ack-mode: record
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: ${OLLAMA_MODEL:qwen3:8b}
+          temperature: 0.1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+app:
+  processing:
+    agent-timeout: ${AGENT_TIMEOUT:10m}
+    workflow-timeout: ${WORKFLOW_TIMEOUT:12m}
+  auth:
+    token-key: ${TOKEN_ENCRYPTION_KEY:}
+  gmail:
+    enabled: ${GMAIL_ENABLED:true}
+    poll-cron: ${GMAIL_POLL_CRON:0 */5 * * * *}
+    query: ${GMAIL_QUERY:label:applications has:attachment}
+  discord:
+    enabled: ${DISCORD_ENABLED:true}
+    bot-token: ${DISCORD_BOT_TOKEN:}
+    channel-id: ${DISCORD_CHANNEL_ID:}
+  storage:
+    resume-directory: ${RESUME_STORAGE_DIR:./data/resumes}
+
+logging:
+  level:
+    org.springframework.security: INFO
+    dev.tc.recruitment: INFO
